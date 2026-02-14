@@ -578,7 +578,7 @@
     <div class="container">
         <header>
             <h1>SKI VAKANTIE</h1>
-            <div class="subtitle">2026 Lofer Adventure</div>
+            <div class="subtitle">2026 Lofer</div>
         </header>
 
         <div class="nav-tabs">
@@ -705,25 +705,37 @@
 
     <footer>
         <div class="footer-text">MADE FOR EPIC SKI DAYS</div>
-        <div class="footer-name">2026 © Thijs Quisenaerts</div>
+        <div class="footer-name">Created by Thijs Quisenaerts</div>
     </footer>
 
     <script>
         // Storage helpers
         async function saveData(key, data) {
             try {
-                await window.storage.set(key, JSON.stringify(data), true);
+                console.log('Saving data for key:', key, 'Data:', data);
+                const result = await window.storage.set(key, JSON.stringify(data), true);
+                console.log('Save result:', result);
+                if (!result) {
+                    throw new Error('Storage returned null');
+                }
+                return result;
             } catch (error) {
-                console.error('Error saving:', error);
+                console.error('Error saving data:', error);
+                throw error;
             }
         }
 
         async function loadData(key, defaultValue = null) {
             try {
+                console.log('Loading data for key:', key);
                 const result = await window.storage.get(key, true);
-                return result ? JSON.parse(result.value) : defaultValue;
+                console.log('Load result:', result);
+                if (result && result.value) {
+                    return JSON.parse(result.value);
+                }
+                return defaultValue;
             } catch (error) {
-                console.log('Key not found or error loading:', error);
+                console.log('Key not found or error loading:', key, error);
                 return defaultValue;
             }
         }
@@ -770,32 +782,51 @@
         document.getElementById('dagboek-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const photos = [];
-            for (let file of photoFiles) {
-                const reader = new FileReader();
-                const dataUrl = await new Promise((resolve) => {
-                    reader.onload = (e) => resolve(e.target.result);
-                    reader.readAsDataURL(file);
-                });
-                photos.push(dataUrl);
+            try {
+                const photos = [];
+                for (let file of photoFiles) {
+                    const reader = new FileReader();
+                    const dataUrl = await new Promise((resolve) => {
+                        reader.onload = (e) => resolve(e.target.result);
+                        reader.readAsDataURL(file);
+                    });
+                    photos.push(dataUrl);
+                }
+                
+                const entry = {
+                    id: Date.now(),
+                    datum: document.getElementById('dag-datum').value,
+                    titel: document.getElementById('dag-titel').value,
+                    verslag: document.getElementById('dag-verslag').value,
+                    fotos: photos
+                };
+                
+                console.log('Saving entry:', entry);
+                dagboekEntries = await loadData('dagboek', []);
+                dagboekEntries.unshift(entry);
+                await saveData('dagboek', dagboekEntries);
+                console.log('Entry saved successfully!');
+                
+                this.reset();
+                document.getElementById('foto-preview').innerHTML = '';
+                photoFiles = [];
+                
+                // Show success message
+                const submitBtn = this.querySelector('button[type="submit"]');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<span>✅ Opgeslagen!</span>';
+                submitBtn.style.background = 'var(--forest)';
+                
+                setTimeout(() => {
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.style.background = '';
+                }, 2000);
+                
+                await renderDagboek();
+            } catch (error) {
+                console.error('Error saving entry:', error);
+                alert('Er ging iets mis bij het opslaan. Probeer het opnieuw.');
             }
-            
-            const entry = {
-                id: Date.now(),
-                datum: document.getElementById('dag-datum').value,
-                titel: document.getElementById('dag-titel').value,
-                verslag: document.getElementById('dag-verslag').value,
-                fotos: photos
-            };
-            
-            dagboekEntries = await loadData('dagboek', []);
-            dagboekEntries.unshift(entry);
-            await saveData('dagboek', dagboekEntries);
-            
-            this.reset();
-            document.getElementById('foto-preview').innerHTML = '';
-            photoFiles = [];
-            renderDagboek();
         });
 
         async function renderDagboek() {
