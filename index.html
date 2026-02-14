@@ -710,53 +710,31 @@
     </footer>
 
     <script>
-        // Storage helpers - with localStorage fallback
-        const useCloudStorage = typeof window.storage !== 'undefined';
-        
-        async function saveData(key, data) {
+        // Storage helpers using localStorage
+        function saveData(key, data) {
             try {
-                console.log('Saving data for key:', key, 'Data:', data);
-                
-                if (useCloudStorage) {
-                    // Use Claude's shared storage
-                    const result = await window.storage.set(key, JSON.stringify(data), true);
-                    console.log('Save result (cloud):', result);
-                    if (!result) {
-                        throw new Error('Storage returned null');
-                    }
-                    return result;
-                } else {
-                    // Fallback to localStorage
-                    localStorage.setItem(key, JSON.stringify(data));
-                    console.log('Save result (localStorage): success');
-                    return true;
-                }
+                console.log('Saving data for key:', key);
+                localStorage.setItem(key, JSON.stringify(data));
+                console.log('Data saved successfully!');
+                return true;
             } catch (error) {
                 console.error('Error saving data:', error);
                 throw error;
             }
         }
 
-        async function loadData(key, defaultValue = null) {
+        function loadData(key, defaultValue = null) {
             try {
                 console.log('Loading data for key:', key);
-                
-                if (useCloudStorage) {
-                    // Use Claude's shared storage
-                    const result = await window.storage.get(key, true);
-                    console.log('Load result (cloud):', result);
-                    if (result && result.value) {
-                        return JSON.parse(result.value);
-                    }
-                    return defaultValue;
-                } else {
-                    // Fallback to localStorage
-                    const data = localStorage.getItem(key);
-                    console.log('Load result (localStorage):', data);
-                    return data ? JSON.parse(data) : defaultValue;
+                const data = localStorage.getItem(key);
+                if (data) {
+                    console.log('Data loaded successfully!');
+                    return JSON.parse(data);
                 }
+                console.log('No data found, using default');
+                return defaultValue;
             } catch (error) {
-                console.log('Key not found or error loading:', key, error);
+                console.log('Error loading:', error);
                 return defaultValue;
             }
         }
@@ -823,9 +801,9 @@
                 };
                 
                 console.log('Saving entry:', entry);
-                dagboekEntries = await loadData('dagboek', []);
+                dagboekEntries = loadData('dagboek', []);
                 dagboekEntries.unshift(entry);
-                await saveData('dagboek', dagboekEntries);
+                saveData('dagboek', dagboekEntries);
                 console.log('Entry saved successfully!');
                 
                 this.reset();
@@ -843,15 +821,15 @@
                     submitBtn.style.background = '';
                 }, 2000);
                 
-                await renderDagboek();
+                renderDagboek();
             } catch (error) {
                 console.error('Error saving entry:', error);
                 alert('Er ging iets mis bij het opslaan. Probeer het opnieuw.');
             }
         });
 
-        async function renderDagboek() {
-            dagboekEntries = await loadData('dagboek', []);
+        function renderDagboek() {
+            dagboekEntries = loadData('dagboek', []);
             const lijst = document.getElementById('dagboek-lijst');
             
             if (dagboekEntries.length === 0) {
@@ -885,7 +863,7 @@
         // Runs functions
         let runs = [];
 
-        document.getElementById('run-form').addEventListener('submit', async function(e) {
+        document.getElementById('run-form').addEventListener('submit', function(e) {
             e.preventDefault();
             
             const run = {
@@ -895,16 +873,16 @@
                 votes: 0
             };
             
-            runs = await loadData('runs', []);
+            runs = loadData('runs', []);
             runs.push(run);
-            await saveData('runs', runs);
+            saveData('runs', runs);
             
             this.reset();
             renderRuns();
         });
 
-        async function renderRuns() {
-            runs = await loadData('runs', []);
+        function renderRuns() {
+            runs = loadData('runs', []);
             const lijst = document.getElementById('runs-lijst');
             
             if (runs.length === 0) {
@@ -930,8 +908,8 @@
         }
 
         // Voting functions
-        async function renderVoting() {
-            runs = await loadData('runs', []);
+        function renderVoting() {
+            runs = loadData('runs', []);
             const votingLijst = document.getElementById('voting-lijst');
             const resultatenDiv = document.getElementById('voting-resultaten');
             
@@ -981,20 +959,20 @@
             }).join('');
         }
 
-        async function vote(runId) {
-            runs = await loadData('runs', []);
+        function vote(runId) {
+            runs = loadData('runs', []);
             const run = runs.find(r => r.id === runId);
             if (run) {
                 run.votes++;
-                await saveData('runs', runs);
+                saveData('runs', runs);
                 renderVoting();
             }
         }
 
         // Stats functions
-        async function updateStats() {
-            dagboekEntries = await loadData('dagboek', []);
-            runs = await loadData('runs', []);
+        function updateStats() {
+            dagboekEntries = loadData('dagboek', []);
+            runs = loadData('runs', []);
             
             const totalFotos = dagboekEntries.reduce((sum, entry) => sum + entry.fotos.length, 0);
             const totalVotes = runs.reduce((sum, run) => sum + run.votes, 0);
@@ -1006,20 +984,15 @@
         }
 
         // Initialize
-        async function init() {
-            // Show which storage mode is active
+        function init() {
+            // Show storage mode
             const storageMode = document.getElementById('storage-mode');
-            if (useCloudStorage) {
-                storageMode.textContent = '☁️ Gedeelde Cloud Opslag Actief - Iedereen ziet dezelfde data';
-                storageMode.style.color = 'var(--forest)';
-            } else {
-                storageMode.textContent = '💾 Lokale Opslag Actief - Data alleen op dit apparaat';
-                storageMode.style.color = 'var(--sunset)';
-            }
+            storageMode.textContent = '💾 Browser Opslag - Data blijft bewaard op dit apparaat';
+            storageMode.style.color = 'var(--mountain)';
             
-            await renderDagboek();
-            await renderRuns();
-            await updateStats();
+            renderDagboek();
+            renderRuns();
+            updateStats();
             
             // Set today's date as default
             document.getElementById('dag-datum').valueAsDate = new Date();
