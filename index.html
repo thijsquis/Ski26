@@ -523,6 +523,43 @@
             opacity: 0.3;
         }
 
+        footer {
+            text-align: center;
+            padding: 3rem 2rem;
+            margin-top: 4rem;
+            border-top: 4px solid var(--mountain);
+            background: rgba(255, 255, 255, 0.9);
+            position: relative;
+        }
+
+        footer::before {
+            content: '⛷️';
+            display: block;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            animation: ski 3s ease-in-out infinite;
+        }
+
+        @keyframes ski {
+            0%, 100% { transform: translateX(-10px) rotate(-5deg); }
+            50% { transform: translateX(10px) rotate(5deg); }
+        }
+
+        .footer-text {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.5rem;
+            letter-spacing: 0.1em;
+            color: var(--mountain);
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-name {
+            font-weight: 600;
+            color: var(--sky);
+            font-size: 0.9rem;
+            letter-spacing: 0.05em;
+        }
+
         @media (max-width: 768px) {
             h1 {
                 font-size: 3rem;
@@ -541,7 +578,7 @@
     <div class="container">
         <header>
             <h1>SKI VAKANTIE</h1>
-            <div class="subtitle">2026 Lofer Adventure</div>
+            <div class="subtitle">2026 Alpine Adventure</div>
         </header>
 
         <div class="nav-tabs">
@@ -665,6 +702,11 @@
             </div>
         </div>
     </div>
+
+    <footer>
+        <div class="footer-text">MADE FOR EPIC SKI DAYS</div>
+        <div class="footer-name">2026 © Thijs Quisenaerts</div>
+    </footer>
 
     <script>
         // Storage helpers
